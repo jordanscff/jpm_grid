@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+    <title>Configurable Grid</title>
+    <style>
+        .recent { font-weight: bold; background-color: #e0f7fa; }
+        .heatmap-low { background-color: #f8d7da; }
+        .heatmap-mid { background-color: #fff3cd; }
+        .heatmap-high { background-color: #d4edda; }
+        table { border-collapse: collapse; width: 80%; margin: auto; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <form method="get" action="/grid">
+            <label for="example">Choose config example:</label>
+            <select name="example" id="example" onchange="this.form.submit()">
+                <option value="1" {% if request.args.get('example', '1') == '1' %}selected{% endif %}>Example 1: Highlight + Heatmap</option>
+                <option value="2" {% if request.args.get('example') == '2' %}selected{% endif %}>Example 2: Plain Table</option>
+            </select>
+        </form>
+    </div>    
+    <h2 style="text-align: center;">Dynamic Configurable Grid</h2>
+    <table>
+        <thead>
+            <tr>
+                {% for col in data[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                {% set is_recent = (now - row.timestamp).total_seconds() < 86400 %}
+                <tr class="{{ 'recent' if config.highlight_recent and is_recent else '' }}">
+                    {% for key, value in row.items() %}
+                        {% if config.heatmap_column == key %}
+                            {% if value < 70 %}
+                                <td class="heatmap-low">{{ value }}</td>
+                            {% elif value < 85 %}
+                                <td class="heatmap-mid">{{ value }}</td>
+                            {% else %}
+                                <td class="heatmap-high">{{ value }}</td>
+                            {% endif %}
+                        {% else %}
+                            <td>{{ value }}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
